@@ -5,7 +5,9 @@ import struct
 import time
 import select
 import binascii
-# Should use stdev
+# Should use stdev so add the import stats function
+import statistics 
+
 
 ICMP_ECHO_REQUEST = 8
 
@@ -46,10 +48,20 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
 
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
+       
+ #######################################################################
 
-        # Fill in start
+        # !!Fill in start!!
 
         # Fetch the ICMP header from the IP packet
+        headerICMP = recPacket[20:28]
+        
+        type, code, checksum, packetID, sequence = struct.unpack('bbHHh', headerICMP)
+        if type == 0 and packetID == ID: 
+            bytesDouble = struct.calcsize("d")
+            timeStamp = struct.unpack("d", reckPacket[28:28] + bytesDouble])[0]
+            rtt = timeReceived = timeStamp
+            return rtt
 
         # Fill in end
         timeLeft = timeLeft - howLongInSelect
@@ -109,15 +121,22 @@ def ping(host, timeout=1):
     
     #Send ping requests to a server separated by approximately one second
     #Add something here to collect the delays of each ping in a list so you can calculate vars after your ping
+    vars = [] 
+    packetMin = []
     
     for i in range(0,4): #Four pings will be sent (loop runs for i=0, 1, 2, 3)
         delay = doOnePing(dest, timeout)
         print(delay)
         time.sleep(1)  # one second
+        packetMin.append(delay)
         
+    packetAverage = (sum(packetMin) / len(packetMin))
+    packetMax = max(packetMin)
+    vars = [str(round(min(packetMin), 2)), str(round(packetAverage, 2)), str(round(packetMax, 2)),str(round(statistics.stdev(packetMin), 2))]
+
     #You should have the values of delay for each ping here; fill in calculation for packet_min, packet_avg, packet_max, and stdev
     #vars = [str(round(packet_min, 8)), str(round(packet_avg, 8)), str(round(packet_max, 8)),str(round(stdev(stdev_var), 8))]
-
+    
     return vars
 
 if __name__ == '__main__':
